@@ -1,5 +1,14 @@
 # monument
 
+## Developing
+
+When `monument.cabal` is changed in any way,
+make sure to run
+```
+nix-shell --pure -p cabal2nix --run "cabal2nix . --enable-profiling" > monument.nix
+```
+
+
 ## Grammar Thoughts
 ```
 types:
@@ -42,6 +51,11 @@ case2 => value2 ?
 case3 => value3 ? 
          value4 
 
+func := (x,y,z) §
+
+¶
+
+
 BUILTIN
 - +
 - - 
@@ -53,6 +67,8 @@ BUILTIN
 - $ (derivative)
 - &
 - |
+
+maybe use: #00a7: § or #00b6: ¶
 
 unused: @ #
 ```
