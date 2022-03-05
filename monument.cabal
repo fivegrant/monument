@@ -16,6 +16,7 @@ executable monument
     main-is:          Main.hs
     other-modules:    Lib.ReductionSystem
                       Lib.Term
+		      Lib.Utils
     -- other-extensions:
     build-depends:    base ^>=4.14.3.0,
     		      containers,

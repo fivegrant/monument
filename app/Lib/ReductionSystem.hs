@@ -1,9 +1,10 @@
 module Lib.ReductionSystem where
 
 import Data.List (elemIndex)
-import Data.Set (Set, size, mapMonotonic)
+import Data.Set (Set, empty, size, mapMonotonic, elemAt, filter)
 
 import Lib.Term
+import Lib.Utils (findRepeat)
 
 data Rule = Rule { left :: Term, right :: Term } deriving (Eq)
 
@@ -21,12 +22,29 @@ transform term rule = Predicate rightName (alter [] 0 rightVars)
           pick (Just index) _ =  leftside rule !! index
           alter result i xs 
                             | null xs = result
-                            | i `elem` xs = alter ((pick (leftIndex i) i) : result) (i+1) (tail xs)
-                            | otherwise = alter (((rightside rule) !! i) : result) (i+1) (tail xs)
+                            | i `elem` xs = alter (pick (leftIndex i) i : result) (i+1) (tail xs)
+                            | otherwise = alter ((rightside rule !! i) : result) (i+1) (tail xs)
           rightName = symbol $ right rule
 
 
 type TRS = Set Rule
+
+newTRS = empty :: TRS
+
+-- reduce does not handle subexpressions
+-- right now it's just matching the first rule
+-- should matter to
+reduce :: TRS -> Term -> Term 
+reduce trs term
+                | null possible = term
+                | otherwise = transform term $ elemAt 0 possible
+                where possible = Data.Set.filter (term`match`) trs
+
+normalize :: TRS -> (Term -> Term)
+normalize trs term = grabResult $ findRepeat reductions
+                    where reductions = 100 `take` iterate (trs`reduce`) term -- 100 is used to prevent infinite loop
+                          grabResult Nothing = term
+                          grabResult (Just x) = x
 
 isDeterministic :: TRS -> Bool
 isDeterministic trs = (==) (size trs) (size (mapMonotonic left trs)) -- O(N)
