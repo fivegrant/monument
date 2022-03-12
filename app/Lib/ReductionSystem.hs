@@ -1,7 +1,7 @@
 module Lib.ReductionSystem where
 
-import Data.List (elemIndex)
-import Data.Set (Set, empty, size, mapMonotonic, elemAt, filter)
+import Data.List (intercalate, elemIndex)
+import Data.Set (Set, empty, size, mapMonotonic, elemAt, filter, toList)
 
 import Lib.Term
 import Lib.Utils (findRepeat)
@@ -10,6 +10,9 @@ data Rule = Rule { left :: Term, right :: Term } deriving (Eq)
 
 leftside = parameters . left
 rightside = parameters . right
+
+instance Show Rule where
+     show (Rule x y) = show x ++ " -> " ++ show y
 
 match :: Term -> Rule -> Bool
 match term rule = term == left rule
@@ -27,9 +30,12 @@ transform term rule = Predicate rightName (alter [] 0 rightVars)
           rightName = symbol $ right rule
 
 
-type TRS = Set Rule
+newtype TRS = TRS {rules :: Set Rule}
 
-newTRS = empty :: TRS
+newTRS = TRS empty 
+
+instance Show TRS where
+     show trs = intercalate "\n" $ [show x | x <- toList $ rules trs]
 
 -- reduce does not handle subexpressions
 -- right now it's just matching the first rule
@@ -38,7 +44,7 @@ reduce :: TRS -> Term -> Term
 reduce trs term
                 | null possible = term
                 | otherwise = transform term $ elemAt 0 possible
-                where possible = Data.Set.filter (term`match`) trs
+                where possible = Data.Set.filter (term`match`) $ rules trs
 
 normalize :: TRS -> (Term -> Term)
 normalize trs term = grabResult $ findRepeat reductions
@@ -47,7 +53,7 @@ normalize trs term = grabResult $ findRepeat reductions
                           grabResult (Just x) = x
 
 isDeterministic :: TRS -> Bool
-isDeterministic trs = (==) (size trs) (size (mapMonotonic left trs)) -- O(N)
+isDeterministic trs = (==) (size $ rules trs) (size (mapMonotonic left $ rules trs)) -- O(N)
 -- `instance Show TRS` should export to the format that
 -- `instance Read TRS` will use. This would allow
 -- for dynamic editing in the interpreter which could
