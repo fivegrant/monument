@@ -28,6 +28,20 @@ instance Eq Term where -- all my ideas behind equality could be bad.
         Predicate xSymbol xs == Predicate ySymbol ys = xSymbol == ySymbol && xs == ys
         _ == _ = False
 
+instance Ord Term where -- Ord will probably be deprecated in place of line number
+        Variable _ <= Variable _ = True 
+        Variable _ <= Predicate _ _ = True 
+        Predicate _ _ <= Variable _  = False
+        Predicate _ [] <= Predicate _ [] = True
+        Predicate xSymbol xs <= Predicate ySymbol ys | xSymbol == ySymbol = peek
+                                                     | xSymbol <= ySymbol = True
+                                                     | otherwise = False
+                                                     where pairs = xs `zip` ys
+                                                           pairEqual (x,y) = x == y
+                                                           remaining = dropWhile pairEqual pairs
+                                                           peek | null remaining = True
+                                                                | otherwise = uncurry (<=) $ head remaining
+
 instance Show Term where
         show (Variable x) = x
         show (Predicate constant []) = constant
