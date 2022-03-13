@@ -1,14 +1,31 @@
 # monument
 
+
+## Usage
+To build run:
+```
+nix-build release.nix
+```
+To start the interpreter run:
+```
+./result/bin/monument
+```
+*more details coming in the future*
+
 ## Developing
 
 When `monument.cabal` is changed in any way,
-make sure to run
+make sure to run:
 ```
 nix-shell --pure -p cabal2nix --run "cabal2nix . --enable-profiling" > monument.nix
 ```
 
+If any new files are added to `app`, make sure they are in the `Lib` subdirectory and include it in
+`other-modules` in `monument.cabal`.
+
 ## Thoughts
+
+*this is basically a notepad, will delete later*
 
 ```
 predicate \var1 constant \var2 -> predicate2 named_thing named_thing2 | named_thing
@@ -47,5 +64,10 @@ Dec(0, b, a) -> Dec(b, a)
 ```
 
 ## Errors
+There are two general error types that make sense to
+alert the user of: Definition and Query.
 
-- Definition Errors: Ambiguity
+*exposition will come later*
+- Definition
+  - Ambiguity
+- Query
