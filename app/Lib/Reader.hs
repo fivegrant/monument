@@ -12,11 +12,12 @@ reservedChars = [' ', '(', ')', ',', '\\']
 
 name = many $ noneOf reservedChars
 
-variable = Variable $ char '\\' *> name
+variable :: Parsec String st Term
+variable = char '\\' *> name
 
 predicate = inParen params
        where inParen = between (char '(') (char ')')
-             params = sepBy1 (char ',')
+             params = sepBy1 $ char ','
 -- manyTill validChar $ try params
 
 -- parseTerm :: String -> Either ParseError Term
@@ -24,8 +25,8 @@ predicate = inParen params
 ----combine using ((varParser <|> functionParser) <|> constant parser) <?> "Invalid"
 --- *parse zero input functions separately
 
-generateTRS :: [String] -> TRS
-generateTRS _ = newTRS
+parseTRS :: String -> TRS
+parseTRS _ = sepBy1 $ char '\n'
 -- parse each line individually
 --- split line at " -> "
 --- run parseTerm
