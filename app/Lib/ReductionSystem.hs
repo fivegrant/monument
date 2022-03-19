@@ -1,7 +1,7 @@
 module Lib.ReductionSystem where
 
 import Data.List (intercalate, elemIndex)
-import Data.Set (Set, empty, size, mapMonotonic, elemAt, filter, toList, insert)
+import Data.Set (Set, empty, size, mapMonotonic, elemAt, filter, toList, insert, fromList)
 
 import Lib.Term
 import Lib.Utils (findRepeat)
@@ -33,6 +33,9 @@ transform term rule = Predicate rightName (alter [] 0 rightVars)
 newtype TRS = TRS {rules :: Set Rule}
 
 newTRS = TRS empty 
+
+generateTRS :: [Rule] -> TRS
+generateTRS ruleset = TRS $ fromList ruleset
 
 insertRule :: TRS -> Rule -> TRS
 insertRule trs rule = TRS $ rule `insert` rules trs
