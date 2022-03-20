@@ -1,11 +1,11 @@
-{ mkDerivation, base, containers, lib, parsec }:
+{ mkDerivation, base, containers, lib, megaparsec }:
 mkDerivation {
   pname = "monument";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = false;
   isExecutable = true;
-  executableHaskellDepends = [ base containers parsec ];
+  executableHaskellDepends = [ base containers megaparsec ];
   enableLibraryProfiling = true;
   enableExecutableProfiling = true;
   description = "A basic term rewriting system";

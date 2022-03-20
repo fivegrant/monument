@@ -21,10 +21,10 @@ varPositions (Predicate _ xs) = findIndices isVar xs
     where isVar (Variable _) = True
           isVar _          = False
 
-instance Eq Term where -- all my ideas behind equality could be bad.
+instance Eq Term where
         Variable _ == Variable _ = True 
         Variable _ == Predicate _ _ = True 
-        Predicate _ [] == Predicate _ [] = True
+        Predicate xSymbol [] == Predicate ySymbol [] = xSymbol == ySymbol
         Predicate xSymbol xs == Predicate ySymbol ys = xSymbol == ySymbol && xs == ys
         _ == _ = False
 
@@ -32,7 +32,7 @@ instance Ord Term where -- Ord will probably be deprecated in place of line numb
         Variable _ <= Variable _ = True 
         Variable _ <= Predicate _ _ = True 
         Predicate _ _ <= Variable _  = False
-        Predicate _ [] <= Predicate _ [] = True
+        Predicate xSymbol [] <= Predicate ySymbol [] = xSymbol < ySymbol
         Predicate xSymbol xs <= Predicate ySymbol ys | xSymbol == ySymbol = peek
                                                      | xSymbol <= ySymbol = True
                                                      | otherwise = False
@@ -43,10 +43,10 @@ instance Ord Term where -- Ord will probably be deprecated in place of line numb
                                                                 | otherwise = uncurry (<=) $ head remaining
 
 instance Show Term where
-        show (Variable x) = x
+        show (Variable x) = "$" ++ x
         show (Predicate constant []) = constant
-        show (Predicate name xs) = show name ++ "(" ++ contents ++ ")"
-            where contents = intercalate ", " [show term |term <- xs]
+        show (Predicate name xs) = name ++ "(" ++ contents ++ ")"
+            where contents = intercalate ", " [show term | term <- xs]
 
 -- Not sure if `instance Read Term` would be possible
 -- to implement given that constants vs variables aren't known
