@@ -17,7 +17,7 @@ instance Show Rule where
      show (Rule x y) = show x ++ " -> " ++ show y
 
 match :: Term -> Rule -> Bool
-match term rule = term == left rule
+match term rule = term |= left rule 
 
 transform :: Term -> Rule -> Term -- implicit assumption that you already ran `match`
 transform term rule = Predicate rightName (alter [] 0 rightVars)
@@ -32,7 +32,7 @@ transform term rule = Predicate rightName (alter [] 0 rightVars)
           rightName = symbol $ right rule
 
 
-newtype TRS = TRS {rules :: OSet Rule}
+newtype TRS = TRS { rules :: OSet Rule }
 
 newTRS = TRS empty 
 
@@ -45,12 +45,27 @@ insertRule trs rule = TRS $ rules trs |> rule
 instance Show TRS where
      show trs = intercalate "\n" $ [show x | x <- toList $ rules trs]
 
--- reduce does not handle subexpressions
--- right now it's just matching the first rule
--- should matter to
+{-
+ this is the 'decision algorith'. this is what i reallllllly need to improve
+ recursion is also done one step at a time, but all args are done simultaneously.
+ this will therefore miss a few cases.
+ case 1:
+   a(b,c) -> d
+   e -> b
+   b -> x
+   g -> f
+   f -> c
+   therefore a(e,g) -> a(b,f) -> a(x,c)
+ case 2:
+   q($a) -> $a
+ issues come from `transform`
+-}
 reduce :: TRS -> Term -> Term 
 reduce trs term
-                | null possible = term
+                | null possible = case term of
+		                       Variable _ -> term
+				       Predicate _ [] -> term
+				       Predicate xSymbol xs -> Predicate xSymbol $ map (trs`reduce`) xs
                 | otherwise = transform term $ fromJust $ possible `elemAt` 0
                 where possible = Data.Set.Ordered.filter (term`match`) $ rules trs
 

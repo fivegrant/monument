@@ -21,12 +21,23 @@ varPositions (Predicate _ xs) = findIndices isVar xs
     where isVar (Variable _) = True
           isVar _          = False
 
+
+
+(|=) :: Term -> Term -> Bool -- term matching operator
+Variable _ |= Predicate _ _ = False  -- right demands specificity
+Variable _ |= Variable _ = True 
+Predicate _ _ |= Variable _ = True
+Predicate xSymbol [] |= Predicate ySymbol [] = xSymbol == ySymbol
+Predicate xSymbol xs |= Predicate ySymbol ys = xSymbol == ySymbol && all match pairs
+                                             where match (x,y) = x |= y
+                                                   pairs = zip xs ys
+
 instance Eq Term where
         Variable _ == Variable _ = True 
         Variable _ == Predicate _ _ = True 
+        Predicate _ _ == Variable _ = True
         Predicate xSymbol [] == Predicate ySymbol [] = xSymbol == ySymbol
         Predicate xSymbol xs == Predicate ySymbol ys = xSymbol == ySymbol && xs == ys
-        _ == _ = False
 
 instance Ord Term where -- Ord will probably be deprecated in place of line number
         Variable _ <= Variable _ = True 
