@@ -8,12 +8,19 @@ import Lib.ReductionSystem
 import Lib.Term
 import Lib.Parser
 
-import Data.Set (fromList)
-
 printLang :: TRS -> IO()
 printLang trs = do
                  print trs
                  interpret trs
+
+query :: TRS -> String -> IO()
+query trs input = do 
+                   if null input 
+                    then interpret trs
+                    else
+                       do 
+                        putStrLn $ (++) "::: " $ show $ normalize trs $ parseTerm input
+                        interpret trs
 
 interpret :: TRS -> IO ()
 interpret trs = do
@@ -21,10 +28,9 @@ interpret trs = do
         putStr "=> "
         input <- getLine
         hSetBuffering stdout LineBuffering
-        putStrLn $ "::: " ++ input
-        when (input /= "\\quit") (if input /= "\\print" 
-                                  then interpret trs 
-                                  else printLang trs)
+        when (input /= "\\quit") (if input == "\\print" 
+                                  then printLang trs
+                                  else query trs input)
 
 main :: IO ()
 main = do

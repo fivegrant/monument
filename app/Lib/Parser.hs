@@ -43,4 +43,10 @@ parseRule = (.) handler $ runParser rule ""
           where handler (Right x) = x
                 handler _ = Rule { left = Variable "error", 
                                    right = Variable "null" }
+
+parseTerm :: String -> Term 
+parseTerm = (.) handler $ runParser term ""
+          where handler (Right x) = x
+                handler _ = Predicate "unreadable" []
+
 -- need to work on my error handling

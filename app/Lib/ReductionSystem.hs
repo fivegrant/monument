@@ -52,7 +52,7 @@ reduce trs term
                 | otherwise = transform term $ elemAt 0 possible
                 where possible = Data.Set.filter (term`match`) $ rules trs
 
-normalize :: TRS -> (Term -> Term)
+normalize :: TRS -> Term -> Term
 normalize trs term = grabResult $ findRepeat reductions
                     where reductions = 100 `take` iterate (trs`reduce`) term -- 100 is used to prevent infinite loop
                           grabResult Nothing = term
