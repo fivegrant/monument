@@ -1,5 +1,6 @@
 module Main where
 
+import Data.List (isInfixOf)
 import Control.Monad (when)
 import System.IO (hSetBuffering, stdout, BufferMode (NoBuffering, LineBuffering) )
 import System.Environment (getArgs)
@@ -18,9 +19,12 @@ query trs input = do
                    if null input 
                     then interpret trs
                     else
-                       do 
-                        putStrLn $ (++) "::: " $ show $ normalize trs $ parseTerm input
-                        interpret trs
+                       if " -> " `isInfixOf` input 
+                       then interpret $ insertRule trs $ parseRule input 
+                       else
+                         do 
+                          putStrLn $ (++) "::: " $ show $ normalize trs $ parseTerm input
+                          interpret trs
 
 interpret :: TRS -> IO ()
 interpret trs = do

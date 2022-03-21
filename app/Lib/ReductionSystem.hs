@@ -1,7 +1,9 @@
 module Lib.ReductionSystem where
 
+import Data.Foldable (toList)
 import Data.List (intercalate, elemIndex)
-import Data.Set (Set, empty, size, mapMonotonic, elemAt, filter, toList, insert, fromList)
+import Data.Set.Ordered (OSet, empty, size, elemAt, filter, (|>), fromList)
+import Data.Maybe (fromJust) -- only for use when a list is known NOT to be nothing
 
 import Lib.Term
 import Lib.Utils (findRepeat)
@@ -30,7 +32,7 @@ transform term rule = Predicate rightName (alter [] 0 rightVars)
           rightName = symbol $ right rule
 
 
-newtype TRS = TRS {rules :: Set Rule}
+newtype TRS = TRS {rules :: OSet Rule}
 
 newTRS = TRS empty 
 
@@ -38,7 +40,7 @@ generateTRS :: [Rule] -> TRS
 generateTRS ruleset = TRS $ fromList ruleset
 
 insertRule :: TRS -> Rule -> TRS
-insertRule trs rule = TRS $ rule `insert` rules trs
+insertRule trs rule = TRS $ rules trs |> rule
 
 instance Show TRS where
      show trs = intercalate "\n" $ [show x | x <- toList $ rules trs]
@@ -49,8 +51,8 @@ instance Show TRS where
 reduce :: TRS -> Term -> Term 
 reduce trs term
                 | null possible = term
-                | otherwise = transform term $ elemAt 0 possible
-                where possible = Data.Set.filter (term`match`) $ rules trs
+                | otherwise = transform term $ fromJust $ possible `elemAt` 0
+                where possible = Data.Set.Ordered.filter (term`match`) $ rules trs
 
 normalize :: TRS -> Term -> Term
 normalize trs term = grabResult $ findRepeat reductions
@@ -58,12 +60,6 @@ normalize trs term = grabResult $ findRepeat reductions
                           grabResult Nothing = term
                           grabResult (Just x) = x
 
-isDeterministic :: TRS -> Bool
-isDeterministic trs = (==) (size $ rules trs) (size (mapMonotonic left $ rules trs)) -- O(N)
--- `instance Show TRS` should export to the format that
--- `instance Read TRS` will use. This would allow
--- for dynamic editing in the interpreter which could
--- save new rules to the file.
---
---
 -- Need to implement functions that check qualities
+-- isDeterministic :: TRS -> Bool
+-- isDeterministic trs = (==) (size $ rules trs) (size (mapMonotonic left $ rules trs)) -- O(N)

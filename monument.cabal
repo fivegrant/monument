@@ -21,6 +21,7 @@ executable monument
     -- other-extensions:
     build-depends:    base ^>=4.14.3.0,
     		      containers,
+    		      ordered-containers,
 		      megaparsec
     hs-source-dirs:   app
     default-language: Haskell2010
