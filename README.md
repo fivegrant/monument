@@ -1,4 +1,7 @@
 # monument
+**FOR JIM'S CODE REVIEW ASSIGNMENT, PLEASE LOOK AT `src/Lib/Parser.hs`**
+**FEEL FREE TO COMMENT ON ANYTHING ELSE IN `src` THOUGH**
+
 **NOTICE: CERTAIN TYPES OF REDUCTIONS END UP CRASHING.**
 **NO GUARANTEES AT THIS POINT. WILL FIX ASAP**
 **PARSING WORKS BUT I HAVENT GOTTEN AROUND TO WRITING A LEXER SO WATCH YOUR WHITESPACES (will also fix soon).**
@@ -10,12 +13,13 @@ nix-build release.nix
 ```
 Alternatively, [you can use Cabal and cabal-install](https://katychuang.com/cabal-guide/):
 ```
-cabal sandbox init
 cabal update
 cabal install
 cabal build
-dist/build/monument
+dist/build/monument # might be `dist-newstyle/.../build/monument` instead
 ```
+note: this works, but cabal-install is not actively supported. Therefore,
+Nix is recommended.
 
 To start the interpreter:
 ```

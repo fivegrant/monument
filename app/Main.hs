@@ -1,4 +1,6 @@
 module Main where
+{- `Main` builds an executable which runs the interpreter.
+ -}
 
 import Data.List ( isInfixOf )
 import Control.Monad ( when )
@@ -21,11 +23,15 @@ import Lib.Parser ( parseRule
                   )
 
 printLang :: TRS -> IO()
+{- Print the entire active reduction system to output
+ -}
 printLang trs = do
                  print trs
                  interpret trs
 
 query :: TRS -> String -> IO()
+{- Insert rule into reduction system OR normalize provided string
+ -}
 query trs input = do 
                    if null input 
                     then interpret trs
@@ -38,6 +44,10 @@ query trs input = do
                           interpret trs
 
 interpret :: TRS -> IO ()
+{- Handles user input and calls corresponding functions.
+
+   `interpret` is recursively called to ensure the interpreter is active.
+ -}
 interpret trs = do
         hSetBuffering stdout NoBuffering
         putStr "=> "
@@ -48,6 +58,11 @@ interpret trs = do
                                   else query trs input)
 
 main :: IO ()
+{- Starts `interpret` with the correct `TRS`.
+
+   If no file is provided, `main` starts `interpret`
+   with an empty `TRS`.
+ -}
 main = do
         args <- getArgs
         if null args 

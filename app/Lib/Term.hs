@@ -1,22 +1,37 @@
 module Lib.Term where
+{- `Lib.Term` defines the basic unit of rewriting, `Term` and its
+   functions and constraints.
+ -}
 
 import Data.List ( intercalate
                  , findIndices
                  )
 
+{- `Term` represents the base unit of a term rewriting system.
+
+   `Term` can be a variable, function, or constant, however,
+   a constant is really just a function with no argument hence
+   constant being represented by a `Predicate` with no parameters. 
+ -}
 data Term = Variable { symbol :: String } |
             Predicate { symbol :: String, parameters :: [Term] } 
 
 isConstant :: Term -> Bool
+{- Check if `Term` is constant.
+ -}
 isConstant (Predicate _ []) = True
 isConstant _ = False
 
 containsVar :: Term -> Bool
+{- Check if `Term` is parameterized AND contains `Variable`.
+ -}
 containsVar (Variable _) = True
 containsVar (Predicate _ []) = False
 containsVar (Predicate _ content) = any containsVar content
 
 varPositions :: Term -> [Int]
+{- Provides a list of the `Variable`s indices in a given `Predicate`.
+ -}
 varPositions (Variable  _) = []
 varPositions (Predicate _ []) = []
 varPositions (Predicate _ xs) = findIndices isVar xs
@@ -24,7 +39,15 @@ varPositions (Predicate _ xs) = findIndices isVar xs
           isVar _          = False
 
 
-(|=) :: Term -> Term -> Bool -- term matching operator
+(|=) :: Term -> Term -> Bool 
+{- Match left side with right side. (match operator)
+
+   Functionally, the match operator is similar to equality, however,
+   the left side must not contain variables where the rightside contains
+   constants. Thus, (|=) is (==) AND not specificity mismatch.
+
+   TODO: Develop a clear definition of `specificity`.
+ -}
 Variable _ |= Predicate _ _ = False  -- right demands specificity
 Variable _ |= Variable _ = True 
 Predicate _ _ |= Variable _ = True
@@ -33,14 +56,25 @@ Predicate xSymbol xs |= Predicate ySymbol ys = xSymbol == ySymbol && all match p
                                              where match (x,y) = x |= y
                                                    pairs = zip xs ys
 
-instance Eq Term where
+instance Show Term where
+{- Convert Terms to strings in a form where they can be re-parsed.
+
+   CAVEAT: This actually cannot be parsed back yet because
+           lexing whitespace for predicate parameters doesn't work yet.
+ -}
+        show (Variable x) = "$" ++ x
+        show (Predicate constant []) = constant
+        show (Predicate name xs) = name ++ "(" ++ contents ++ ")"
+            where contents = intercalate ", " [show term | term <- xs]
+
+instance Eq Term where -- deprecated in favor of term match operator (|=)
         Variable _ == Variable _ = True 
         Variable _ == Predicate _ _ = True 
         Predicate _ _ == Variable _ = True
         Predicate xSymbol [] == Predicate ySymbol [] = xSymbol == ySymbol
         Predicate xSymbol xs == Predicate ySymbol ys = xSymbol == ySymbol && xs == ys
 
-instance Ord Term where -- Ord will probably be deprecated in place of line number
+instance Ord Term where -- deprecated, better system needed for organizing terms 
         Variable _ <= Variable _ = True 
         Variable _ <= Predicate _ _ = True 
         Predicate _ _ <= Variable _  = False
@@ -53,15 +87,4 @@ instance Ord Term where -- Ord will probably be deprecated in place of line numb
                                                            remaining = dropWhile pairEqual pairs
                                                            peek | null remaining = True
                                                                 | otherwise = uncurry (<=) $ head remaining
-
-instance Show Term where
-        show (Variable x) = "$" ++ x
-        show (Predicate constant []) = constant
-        show (Predicate name xs) = name ++ "(" ++ contents ++ ")"
-            where contents = intercalate ", " [show term | term <- xs]
-
--- Not sure if `instance Read Term` would be possible
--- to implement given that constants vs variables aren't known
--- ahead of time.
-
 
