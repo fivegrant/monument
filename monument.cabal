@@ -16,12 +16,11 @@ executable monument
     main-is:          Main.hs
     other-modules:    Lib.ReductionSystem
                       Lib.Term
-		      Lib.Utils
-		      Lib.Parser
-    -- other-extensions:
+                      Lib.Utils
+                      Lib.Parser
     build-depends:    base ^>=4.14.3.0,
-    		      containers,
-    		      ordered-containers,
-		      megaparsec
+                      containers,
+                      ordered-containers,
+                      megaparsec
     hs-source-dirs:   app
     default-language: Haskell2010
