@@ -1,13 +1,24 @@
 module Main where
 
-import Data.List (isInfixOf)
-import Control.Monad (when)
-import System.IO (hSetBuffering, stdout, BufferMode (NoBuffering, LineBuffering) )
-import System.Environment (getArgs)
+import Data.List ( isInfixOf )
+import Control.Monad ( when )
+import System.IO ( hSetBuffering
+                 , stdout
+                 , BufferMode ( NoBuffering
+                              , LineBuffering
+                              )
+                 )
+import System.Environment ( getArgs )
 
-import Lib.ReductionSystem
-import Lib.Term
-import Lib.Parser
+import Lib.ReductionSystem ( TRS
+                           , newTRS
+                           , generateTRS
+                           , insertRule
+                           , normalize
+                           )
+import Lib.Parser ( parseRule
+                  , parseTerm
+                  )
 
 printLang :: TRS -> IO()
 printLang trs = do

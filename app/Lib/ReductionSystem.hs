@@ -1,12 +1,29 @@
 module Lib.ReductionSystem where
 
-import Data.Foldable (toList)
-import Data.List (intercalate, elemIndex)
-import Data.Set.Ordered (OSet, empty, size, elemAt, filter, (|>), fromList)
-import Data.Maybe (fromJust) -- only for use when a list is known NOT to be nothing
+import Data.Foldable ( toList )
+import Data.List ( intercalate
+                 , elemIndex
+                 , length
+                 )
+import Data.Set.Ordered ( OSet
+                        , empty
+                        -- , size
+                        , elemAt
+                        , filter
+                        , (|>)
+                        , fromList
+                        )
+import Data.Maybe ( fromJust ) -- only for use when a list is known NOT to be nothing
 
-import Lib.Term
-import Lib.Utils (findRepeat)
+import Lib.Term ( Term ( Variable
+                       , Predicate
+                       )
+                , symbol
+                , parameters
+                , varPositions
+                , (|=) -- term matching : equals but specificity is set by the right.
+                )
+import Lib.Utils ( findRepeat )
 
 data Rule = Rule { left :: Term, right :: Term } deriving (Eq, Ord)
 
@@ -16,21 +33,24 @@ rightside = parameters . right
 instance Show Rule where
      show (Rule x y) = show x ++ " -> " ++ show y
 
-match :: Term -> Rule -> Bool
-match term rule = term |= left rule 
-
-transform :: Term -> Rule -> Term -- implicit assumption that you already ran `match`
-transform term rule = Predicate rightName (alter [] 0 rightVars)
-    where rightVars = varPositions $ right rule
-          leftIndex index = elemIndex (rightside rule !! index) (leftside rule)
-          pick Nothing index = rightside rule !! index
-          pick (Just index) _ =  leftside rule !! index
-          alter result i xs 
-                            | null xs = result
-                            | i `elem` xs = alter (pick (leftIndex i) i : result) (i+1) (tail xs)
-                            | otherwise = alter ((rightside rule !! i) : result) (i+1) (tail xs)
-          rightName = symbol $ right rule
-
+transform :: Term -> Rule -> Term -- implicit assumption rule and term match
+transform term rule = if maxIndex /= 0 || not (null rightVars)
+                      then Predicate rightName (alter [] 0 rightVars)
+                      else right rule
+    where 
+        maxIndex = (+(-1)) $ length $ rightside rule
+        rightVars = varPositions $ right rule
+        leftIndex index = elemIndex (rightside rule !! index) (leftside rule)
+        pick Nothing index = rightside rule !! index
+        pick (Just index) _ =  leftside rule !! index
+        alter result i xs 
+            | null xs = if maxIndex < i 
+                        then result 
+                        else case xs of [x] -> result ++ [rightside rule !! i]
+                                        _      -> alter (result ++ [rightside rule !! i]) (i+1) (tail xs)
+            | i `elem` xs = alter (result ++ [pick (leftIndex i) i]) (i+1) (tail xs)
+            | otherwise = alter (result ++ [rightside rule !! i]) (i+1) (tail xs) 
+        rightName = symbol $ right rule
 
 newtype TRS = TRS { rules :: OSet Rule }
 
@@ -46,7 +66,7 @@ instance Show TRS where
      show trs = intercalate "\n" $ [show x | x <- toList $ rules trs]
 
 {-
- this is the 'decision algorith'. this is what i reallllllly need to improve
+ this is the 'decision algorithm'. this is what i reallllllly need to improve
  recursion is also done one step at a time, but all args are done simultaneously.
  this will therefore miss a few cases.
  case 1:
@@ -60,14 +80,17 @@ instance Show TRS where
    q($a) -> $a
  issues come from `transform`
 -}
-reduce :: TRS -> Term -> Term 
 reduce trs term
-                | null possible = case term of
-		                       Variable _ -> term
-				       Predicate _ [] -> term
-				       Predicate xSymbol xs -> Predicate xSymbol $ map (trs`reduce`) xs
-                | otherwise = transform term $ fromJust $ possible `elemAt` 0
-                where possible = Data.Set.Ordered.filter (term`match`) $ rules trs
+    | null possible = case term of
+        Variable _ -> term
+        Predicate _ [] -> term
+        Predicate xSymbol xs -> Predicate xSymbol $ map (trs`reduce`) xs
+    | otherwise = transform term $ fromJust $ possible `elemAt` 0
+    -- (///) and `match` might do more in the future. 
+    -- (///) for example might apply it's own kind of ordering
+    where possible = rules trs /// match
+          (///) xs f = Data.Set.Ordered.filter f xs
+          match = (term |=) . left
 
 normalize :: TRS -> Term -> Term
 normalize trs term = grabResult $ findRepeat reductions

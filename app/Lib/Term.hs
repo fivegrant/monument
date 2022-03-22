@@ -1,8 +1,10 @@
 module Lib.Term where
 
-import Data.List (intercalate, findIndices)
+import Data.List ( intercalate
+                 , findIndices
+                 )
 
-data Term = Variable  { symbol :: String } |
+data Term = Variable { symbol :: String } |
             Predicate { symbol :: String, parameters :: [Term] } 
 
 isConstant :: Term -> Bool
@@ -20,7 +22,6 @@ varPositions (Predicate _ []) = []
 varPositions (Predicate _ xs) = findIndices isVar xs
     where isVar (Variable _) = True
           isVar _          = False
-
 
 
 (|=) :: Term -> Term -> Bool -- term matching operator

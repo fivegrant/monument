@@ -1,12 +1,31 @@
 module Lib.Parser where
 
-import Data.Void
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import Data.Void ( Void )
+import Text.Megaparsec ( Parsec 
+                       , (<|>) -- composes parser `p` with `q`. (q if p fails to parse)
+                       , (<?>) -- overrides parser `p`'s error with string `m`.
+                       , between 
+                       , some
+                       , noneOf
+                       , sepBy
+                       , notFollowedBy
+                       , try
+                       , runParser
+                       )
+import Text.Megaparsec.Char ( char
+                            , string
+                            )
 
-import Lib.Term
-import Lib.ReductionSystem
-import Lib.Utils (findRepeat)
+import Lib.Term ( Term ( Predicate
+                       , Variable
+                       )
+                , symbol
+                , parameters
+                )
+import Lib.ReductionSystem ( Rule ( Rule )
+                           , left
+                           , right
+                           )
 
 type Parser = Parsec Void String
 
@@ -50,3 +69,4 @@ parseTerm = (.) handler $ runParser term ""
                 handler _ = Predicate "unreadable" []
 
 -- need to work on my error handling
+-- lexer needed to reduce whitespace sensitivity

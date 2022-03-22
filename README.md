@@ -1,16 +1,34 @@
 # monument
-
+**NOTICE: CERTAIN TYPES OF REDUCTIONS END UP CRASHING.**
+**NO GUARANTEES AT THIS POINT. WILL FIX ASAP**
+**PARSING WORKS BUT I HAVENT GOTTEN AROUND TO WRITING A LEXER SO WATCH YOUR WHITESPACES (will also fix soon).**
 
 ## Usage
-To build run:
+To build using [Nix](https://nixos.org/):
 ```
 nix-build release.nix
 ```
-To start the interpreter run:
+Alternatively, [you can use Cabal and cabal-install](https://katychuang.com/cabal-guide/):
 ```
-./result/bin/monument
+cabal sandbox init
+cabal update
+cabal install
+cabal build
+dist/build/monument
 ```
-*more details coming in the future*
+
+To start the interpreter:
+```
+./result/bin/monument [optional-input-file]
+```
+
+For the optional input file, I suggest using `tests/sample.mo`.
+
+Once you are in the interpreter, the possible commands are
+- `\quit`: quit session
+- `\print`: print the current rules of the reduction system
+- `[term] -> [term]` adds a new rule to the reduction system
+- `[term]` normalizes a term.
 
 ## Developing
 
