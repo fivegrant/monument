@@ -107,8 +107,8 @@ parseRule :: String -> Rule
  -}
 parseRule = (.) handler $ runParser rule ""
           where handler (Right x) = x
-                handler _ = Rule { left = Variable "error", 
-                                   right = Variable "null" }
+                handler _ = Rule { left = Predicate "error" [], 
+                                   right = Predicate "null" [] }
 
 parseTerm :: String -> Term 
 {- Returns `Term` by interfacing with `term` parser.

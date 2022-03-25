@@ -67,12 +67,11 @@ instance Show Term where
         show (Predicate name xs) = name ++ "(" ++ contents ++ ")"
             where contents = intercalate ", " [show term | term <- xs]
 
-instance Eq Term where -- deprecated in favor of term match operator (|=)
-        Variable _ == Variable _ = True 
-        Variable _ == Predicate _ _ = True 
-        Predicate _ _ == Variable _ = True
+instance Eq Term where
+        Variable x == Variable y = x == y
         Predicate xSymbol [] == Predicate ySymbol [] = xSymbol == ySymbol
         Predicate xSymbol xs == Predicate ySymbol ys = xSymbol == ySymbol && xs == ys
+        _ == _ = False
 
 instance Ord Term where -- deprecated, better system needed for organizing terms 
         Variable _ <= Variable _ = True 

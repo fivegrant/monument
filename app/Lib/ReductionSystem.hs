@@ -23,6 +23,7 @@ import Lib.Term ( Term ( Variable
                 , symbol
                 , parameters
                 , varPositions
+                , containsVar
                 , (|=) -- term matching : equals but specificity is set by the right.
                 )
 import Lib.Utils ( findRepeat )
@@ -32,10 +33,19 @@ import Lib.Utils ( findRepeat )
  -}
 data Rule = Rule { left :: Term, right :: Term } deriving (Eq, Ord)
 
--- Helper functions for quickly grabbing parameters from a rule.
--- TODO: Pattern match variables to ensure no breakage.
-leftside = parameters . left
-rightside = parameters . right
+valid :: Rule -> Bool
+{- Checks if rules follow certain properties
+
+   In order for the system to work, the following cases need to be removed:
+    1. The left rule cannot be a single variable
+    2. Every variable on the right must be found on the left.
+ -}
+valid (Rule (Variable _) r) = False
+valid (Rule l r) = any onLeft $ parameters r
+           where onLeft = (`elem` parameters l)
+
+-- TODO: HANDLE ERRORS WITH OWN TYPE + FILE
+invalid = Predicate "error:invalid_rule" [] -- error returned when invalid
 
 instance Show Rule where
 {- Convert `Rule` to string that is re-parsable.
@@ -48,31 +58,36 @@ transform :: Term -> Rule -> Term -- implicit assumption rule and term match
    Warning: `transform` implicitly assumed the term matched (|=)
             with the left side of the rule.
 
-   TODO/WARNING/BUG/HIGH-PRIORITY: This function crashes for certain kinds of
-                                   transformations. Fix ASAP!
+   TODO/WARNING/BUG/HIGH-PRIORITY: `f(f($var)) -> $var` not working
+   TODO: Error checking with `valid`?
+   TODO: Shorten length of lines
  -}
-transform term rule = if maxIndex /= 0 || not (null rightVars)
-                      then Predicate rightName (alter [] 0 rightVars)
-                      else right rule
-    where 
-        maxIndex = (+(-1)) $ length $ rightside rule
-        rightVars = varPositions $ right rule
-        leftIndex index = elemIndex (rightside rule !! index) (leftside rule)
-        pick Nothing index = rightside rule !! index
-        pick (Just index) _ =  leftside rule !! index
-        alter result i xs 
-            | null xs = if maxIndex < i 
-                        then result 
-                        else case xs of [x] -> result ++ [rightside rule !! i]
-                                        _      -> alter (result ++ [rightside rule !! i]) (i+1) (tail xs)
-            | i `elem` xs = alter (result ++ [pick (leftIndex i) i]) (i+1) (tail xs)
-            | otherwise = alter (result ++ [rightside rule !! i]) (i+1) (tail xs) 
-        rightName = symbol $ right rule
+transform (Predicate _ termArgs)
+          (Rule (Predicate _ ruleArgs) 
+                (Variable x)) = locate index
+  where index = elemIndex (Variable x) ruleArgs
+        locate Nothing = invalid
+        locate (Just i) = termArgs !! i -- unsafe (!!), 
+                                        -- honestly I'm tempted to rewrite this case with `fromJust`
+
+transform (Predicate termSym termArgs)
+          (Rule (Predicate _ lArgs) 
+                (Predicate predSym rArgs)) = if not $ containsVar $ Predicate predSym rArgs
+                                             then Predicate predSym rArgs
+                                             else Predicate predSym $ map pick rArgs
+                                               where leftIndex x = fromJust $ elemIndex x lArgs
+                                                     pick x = case x of 
+                                                               Predicate _ _ -> x
+                                                               Variable _ -> (!!) termArgs $ leftIndex x
+
+transform x y = Predicate "error:no_match" []
 
 {- `TRS` is the (T)erm (R)ewriting (S)ystem.
 
    `TRS` contains a set of `Rule`s that are order by
    insertion.
+
+   TODO: Run `valid` to see if a rule can be added.
  -}
 newtype TRS = TRS { rules :: OSet Rule }
 
@@ -131,6 +146,7 @@ normalize trs term = grabResult $ findRepeat reductions
                     where reductions = 100 `take` iterate (trs`reduce`) term -- 100 is used to prevent infinite loop
                           grabResult Nothing = term
                           grabResult (Just x) = x
+
 
 -- Need to implement functions that check qualities
 -- isDeterministic :: TRS -> Bool
