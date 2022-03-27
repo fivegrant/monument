@@ -26,6 +26,10 @@ import Lib.Term ( Term ( Variable
                 , symbol
                 , parameters
                 , varPositions
+                , varLocations
+                , variables
+                , locate
+                , fetch
                 , containsVar
                 , (|=) -- term matching : equals but specificity is set by the right.
                 )
@@ -50,8 +54,8 @@ valid :: Rule -> Bool
     2. Every variable on the right must be found on the left.
  -}
 valid (Rule (Variable _) r) = False
-valid (Rule l r) = any onLeft $ parameters r
-           where onLeft = (`elem` parameters l)
+valid (Rule l r) = all onLeft $ variables r
+           where onLeft = (`elem` variables l)
 
 -- TODO: HANDLE ERRORS WITH OWN TYPE + FILE
 invalid = mkConstant "error:invalid_rule" -- error returned when invalid
@@ -67,17 +71,12 @@ transform :: Term -> Rule -> Term -- implicit assumption rule and term match
    Warning: `transform` implicitly assumed the term matched (|=)
             with the left side of the rule.
 
-   TODO/WARNING/BUG/HIGH-PRIORITY: `f(f($var)) -> $var` not working
    TODO: Error checking with `valid`?
    TODO: Shorten length of lines
  -}
-transform (Predicate _ termArgs _)
-          (Rule (Predicate _ ruleArgs _ ) 
-                (Variable x)) = locate index
-  where index = elemIndex (Variable x) ruleArgs
-        locate Nothing = invalid
-        locate (Just i) = termArgs !! i -- unsafe (!!), 
-                                        -- honestly I'm tempted to rewrite this case with `fromJust`
+transform query
+          (Rule l (Variable x)) = fromJust $ fetch query $ (!!0) $ locate l $ mkVariable x
+
 transform (Predicate termSym termArgs _)
           (Rule (Predicate _ lArgs _) 
                 (Predicate predSym rArgs _)) = if not $ containsVar $ mkFunction predSym rArgs
@@ -88,26 +87,32 @@ transform (Predicate termSym termArgs _)
                                                                Predicate {} -> x
                                                                Variable _ -> (!!) termArgs $ leftIndex x
 
-transform x y = mkConstant "error:no_match"
+transform _ _ = mkConstant "error:no_match"
 
 {- `TRS` is the (T)erm (R)ewriting (S)ystem.
 
    `TRS` contains a set of `Rule`s that are order by
    insertion.
-
-   TODO: Run `valid` to see if a rule can be added.
  -}
 newtype TRS = TRS { rules :: OSet Rule }
 
 newTRS = TRS empty 
 
-generateTRS :: [Rule] -> TRS
-generateTRS ruleset = TRS $ fromList ruleset
+mkTRS :: [Rule] -> TRS
+{- Smart constructor for `TRS`.
+
+   Ensures `TRS` does not accept invalid rules.
+ -}
+mkTRS ruleset = TRS $ fromList $ Prelude.filter valid ruleset
 
 insertRule :: TRS -> Rule -> TRS
 {- Returns a new `TRS` that includes the new rule.
+
+   Ensures `TRS` does not accept invalid rules.
+
+   TODO: Reduce time complexity.
  -}
-insertRule trs rule = TRS $ rules trs |> rule
+insertRule trs rule = if valid rule then TRS $ rules trs |> rule else trs
 
 instance Show TRS where
 {- Convert `TRS` to string that is re-parsable

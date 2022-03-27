@@ -14,7 +14,7 @@ import System.Environment ( getArgs )
 
 import Lib.ReductionSystem ( TRS
                            , newTRS
-                           , generateTRS
+                           , mkTRS
                            , insertRule
                            , normalize
                            )
@@ -69,5 +69,5 @@ main = do
           then interpret newTRS
           else do 
                 file <- readFile $ head args
-                interpret $ generateTRS $ map parseRule $ lines file
+                interpret $ mkTRS $ map parseRule $ lines file
 
