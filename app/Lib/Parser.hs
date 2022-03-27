@@ -29,10 +29,14 @@ import Text.Megaparsec.Char ( char
 import Lib.Term ( Term ( Predicate
                        , Variable
                        )
+                , mkFunction
+                , mkConstant
+                , mkVariable
                 , symbol
                 , parameters
                 )
 import Lib.ReductionSystem ( Rule ( Rule )
+                           , mkRule
                            , left
                            , right
                            )
@@ -56,7 +60,7 @@ variable :: Parser Term
    The parser simply reads a string of the form $variableName
    and tosses the `$` symbol.
  -}
-variable = Variable <$> (char '$' *> name)
+variable = mkVariable <$> (char '$' *> name)
 
 function :: Parser Term
 {- Returns a `Predicate` value that contains parameters.
@@ -67,7 +71,7 @@ function :: Parser Term
 function = do 
               functionSymbol <- name
               contents <- inParen params
-              return Predicate { symbol = functionSymbol, parameters = contents }
+              return $ mkFunction functionSymbol contents
       where inParen = between (char '(') (char ')')
             params = term `sepBy` char ','
 
@@ -79,7 +83,7 @@ constant :: Parser Term
    which the parser recognizes as a constant. Special rules for parsing
    constants might come along later, so this parser is separate.
  -}
-constant = (`Predicate`[]) <$> (name <* notFollowedBy (char '('))
+constant = mkConstant <$> (name <* notFollowedBy (char '('))
 
 term :: Parser Term
 {- Returns `Term`.
@@ -107,8 +111,7 @@ parseRule :: String -> Rule
  -}
 parseRule = (.) handler $ runParser rule ""
           where handler (Right x) = x
-                handler _ = Rule { left = Predicate "error" [], 
-                                   right = Predicate "null" [] }
+                handler _ = mkRule (mkConstant "error") (mkConstant "null")
 
 parseTerm :: String -> Term 
 {- Returns `Term` by interfacing with `term` parser.
@@ -118,5 +121,5 @@ parseTerm :: String -> Term
  -}
 parseTerm = (.) handler $ runParser term ""
           where handler (Right x) = x
-                handler _ = Predicate "unreadable" []
+                handler _ = mkConstant "unreadable"
 

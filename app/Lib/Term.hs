@@ -14,30 +14,45 @@ import Data.List ( intercalate
    constant being represented by a `Predicate` with no parameters. 
  -}
 data Term = Variable { symbol :: String } |
-            Predicate { symbol :: String, parameters :: [Term] } 
+            Predicate { symbol :: String, parameters :: [Term], varLocations :: [[Int]] } 
+            deriving (Eq)
+
+mkFunction :: String -> [Term] -> Term
+{- Smart constructor for a function.
+ -}
+mkFunction sym params = Predicate sym params []
+
+mkConstant :: String -> Term
+{- Smart constructor for a constant.
+ -}
+mkConstant sym = Predicate sym [] []
+
+mkVariable :: String -> Term
+{- Smart constructor for a variable.
+ -}
+mkVariable = Variable
 
 isConstant :: Term -> Bool
 {- Check if `Term` is constant.
  -}
-isConstant (Predicate _ []) = True
+isConstant (Predicate _ [] _ ) = True
 isConstant _ = False
 
 containsVar :: Term -> Bool
 {- Check if `Term` is parameterized AND contains `Variable`.
  -}
 containsVar (Variable _) = True
-containsVar (Predicate _ []) = False
-containsVar (Predicate _ content) = any containsVar content
+containsVar (Predicate _ [] _ ) = False
+containsVar (Predicate _ content _ ) = any containsVar content
 
 varPositions :: Term -> [Int]
 {- Provides a list of the `Variable`s indices in a given `Predicate`.
  -}
 varPositions (Variable  _) = []
-varPositions (Predicate _ []) = []
-varPositions (Predicate _ xs) = findIndices isVar xs
+varPositions (Predicate _ [] _) = []
+varPositions (Predicate _ xs _) = findIndices isVar xs
     where isVar (Variable _) = True
           isVar _          = False
-
 
 (|=) :: Term -> Term -> Bool 
 {- Match left side with right side. (match operator)
@@ -48,11 +63,11 @@ varPositions (Predicate _ xs) = findIndices isVar xs
 
    TODO: Develop a clear definition of `specificity`.
  -}
-Variable _ |= Predicate _ _ = False  -- right demands specificity
+Variable _ |= Predicate {} = False  -- right demands specificity
 Variable _ |= Variable _ = True 
-Predicate _ _ |= Variable _ = True
-Predicate xSymbol [] |= Predicate ySymbol [] = xSymbol == ySymbol
-Predicate xSymbol xs |= Predicate ySymbol ys = xSymbol == ySymbol && all match pairs
+Predicate {} |= Variable _ = True
+Predicate xSymbol [] _ |= Predicate ySymbol [] _ = xSymbol == ySymbol
+Predicate xSymbol xs _ |= Predicate ySymbol ys _ = xSymbol == ySymbol && all match pairs
                                              where match (x,y) = x |= y
                                                    pairs = zip xs ys
 
@@ -63,27 +78,21 @@ instance Show Term where
            lexing whitespace for predicate parameters doesn't work yet.
  -}
         show (Variable x) = "$" ++ x
-        show (Predicate constant []) = constant
-        show (Predicate name xs) = name ++ "(" ++ contents ++ ")"
+        show (Predicate constant [] _) = constant
+        show (Predicate name xs _) = name ++ "(" ++ contents ++ ")"
             where contents = intercalate ", " [show term | term <- xs]
-
-instance Eq Term where
-        Variable x == Variable y = x == y
-        Predicate xSymbol [] == Predicate ySymbol [] = xSymbol == ySymbol
-        Predicate xSymbol xs == Predicate ySymbol ys = xSymbol == ySymbol && xs == ys
-        _ == _ = False
 
 instance Ord Term where -- deprecated, better system needed for organizing terms 
         Variable _ <= Variable _ = True 
-        Variable _ <= Predicate _ _ = True 
-        Predicate _ _ <= Variable _  = False
-        Predicate xSymbol [] <= Predicate ySymbol [] = xSymbol < ySymbol
-        Predicate xSymbol xs <= Predicate ySymbol ys | xSymbol == ySymbol = peek
-                                                     | xSymbol <= ySymbol = True
-                                                     | otherwise = False
-                                                     where pairs = xs `zip` ys
-                                                           pairEqual (x,y) = x == y
-                                                           remaining = dropWhile pairEqual pairs
-                                                           peek | null remaining = True
-                                                                | otherwise = uncurry (<=) $ head remaining
+        Variable _ <= Predicate {} = True 
+        Predicate {} <= Variable _  = False
+        Predicate xSymbol [] _ <= Predicate ySymbol [] _ = xSymbol < ySymbol
+        Predicate xSymbol xs _ <= Predicate ySymbol ys _ | xSymbol == ySymbol = peek
+                                                         | xSymbol <= ySymbol = True
+                                                         | otherwise = False
+                                                         where pairs = xs `zip` ys
+                                                               pairEqual (x,y) = x == y
+                                                               remaining = dropWhile pairEqual pairs
+                                                               peek | null remaining = True
+                                                                    | otherwise = uncurry (<=) $ head remaining
 

@@ -20,6 +20,9 @@ import Data.Maybe ( fromJust ) -- only for use when a list is known NOT to be no
 import Lib.Term ( Term ( Variable
                        , Predicate
                        )
+                , mkFunction
+                , mkConstant
+                , mkVariable
                 , symbol
                 , parameters
                 , varPositions
@@ -33,6 +36,12 @@ import Lib.Utils ( findRepeat )
  -}
 data Rule = Rule { left :: Term, right :: Term } deriving (Eq, Ord)
 
+
+mkRule :: Term -> Term -> Rule
+{- Smart constructor for `Rule`.
+ -}
+mkRule = Rule
+
 valid :: Rule -> Bool
 {- Checks if rules follow certain properties
 
@@ -45,7 +54,7 @@ valid (Rule l r) = any onLeft $ parameters r
            where onLeft = (`elem` parameters l)
 
 -- TODO: HANDLE ERRORS WITH OWN TYPE + FILE
-invalid = Predicate "error:invalid_rule" [] -- error returned when invalid
+invalid = mkConstant "error:invalid_rule" -- error returned when invalid
 
 instance Show Rule where
 {- Convert `Rule` to string that is re-parsable.
@@ -62,25 +71,24 @@ transform :: Term -> Rule -> Term -- implicit assumption rule and term match
    TODO: Error checking with `valid`?
    TODO: Shorten length of lines
  -}
-transform (Predicate _ termArgs)
-          (Rule (Predicate _ ruleArgs) 
+transform (Predicate _ termArgs _)
+          (Rule (Predicate _ ruleArgs _ ) 
                 (Variable x)) = locate index
   where index = elemIndex (Variable x) ruleArgs
         locate Nothing = invalid
         locate (Just i) = termArgs !! i -- unsafe (!!), 
                                         -- honestly I'm tempted to rewrite this case with `fromJust`
-
-transform (Predicate termSym termArgs)
-          (Rule (Predicate _ lArgs) 
-                (Predicate predSym rArgs)) = if not $ containsVar $ Predicate predSym rArgs
-                                             then Predicate predSym rArgs
-                                             else Predicate predSym $ map pick rArgs
+transform (Predicate termSym termArgs _)
+          (Rule (Predicate _ lArgs _) 
+                (Predicate predSym rArgs _)) = if not $ containsVar $ mkFunction predSym rArgs
+                                             then mkFunction predSym rArgs
+                                             else mkFunction predSym $ map pick rArgs
                                                where leftIndex x = fromJust $ elemIndex x lArgs
                                                      pick x = case x of 
-                                                               Predicate _ _ -> x
+                                                               Predicate {} -> x
                                                                Variable _ -> (!!) termArgs $ leftIndex x
 
-transform x y = Predicate "error:no_match" []
+transform x y = mkConstant "error:no_match"
 
 {- `TRS` is the (T)erm (R)ewriting (S)ystem.
 
@@ -127,8 +135,8 @@ NOTES:
 reduce trs term
     | null possible = case term of
         Variable _ -> term
-        Predicate _ [] -> term
-        Predicate xSymbol xs -> Predicate xSymbol $ map (trs`reduce`) xs
+        Predicate _ [] _ -> term
+        Predicate xSymbol xs _ -> mkFunction xSymbol $ map (trs`reduce`) xs
     | otherwise = transform term $ fromJust $ possible `elemAt` 0
     -- (///) and `match` might do more in the future. 
     -- (///) for example might apply it's own kind of ordering
