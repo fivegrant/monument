@@ -20,8 +20,10 @@ import qualified Data.Map as Map ( Map
                                  , null
                                  )
 
+import Lib.Utils ( changeElement )
 
-{- `Positions` takes a Function and returns a list of all the `Variable` positions.
+{- `PositionMap` takes a Function and returns a list of all the `Variable` positions.
+   `[Position]` gives all the paths available in a list.
 
    If a `Variable` or constant `Predicate` is given, an empty list is returned.
    The format of the list that is returned contain the indices that need to be 
@@ -30,7 +32,8 @@ import qualified Data.Map as Map ( Map
    Example: The predicate `f($x,g($x),$y)` would return the map
             `[0,[1,0]]` for the key `x` and `[2]` for `y`.
  -}
-type Positions = Map.Map Term [[Int]]
+type Position = [Int]
+type PositionMap = Map.Map Term [Position]
 
 {- `Term` represents the base unit of a term rewriting system.
 
@@ -39,13 +42,13 @@ type Positions = Map.Map Term [[Int]]
    constant being represented by a `Predicate` with no parameters. 
  -}
 data Term = Variable { symbol :: String } |
-            Predicate { symbol :: String, parameters :: [Term], varLocations :: Positions } 
+            Predicate { symbol :: String, parameters :: [Term], varLocations :: PositionMap } 
             deriving (Eq)
 
-genLocations :: [Term] -> Positions
+genLocations :: [Term] -> PositionMap
 {- Generate a mapping of all the locations of variables.
 
-   Conforms to the conventions set in `Positions` documentation.
+   Conforms to the conventions set in `PositionMap` documentation.
  -}
 genLocations terms = foldr buildMap (Map.fromList topLevel) indices
   where indices = [0..length terms - 1]
@@ -62,30 +65,40 @@ genLocations terms = foldr buildMap (Map.fromList topLevel) indices
                   | not $ Map.member k currMap = Map.insert k [i:x | x <- v] currMap
                   | otherwise = Map.insert k (currMap Map.! k ++ [i:x | x <- v]) currMap
 
-locate :: Term -> Term -> [[Int]]
+locate :: Term -> Term -> [Position]
 {- Query `Term` for locations of a `Variable`.
 
-   Conforms to the conventions set in `Positions` documentation.
+   Conforms to the conventions set in `PositionMap` documentation.
  -}
 locate (Variable _) query = []
 locate (Predicate _ _ locations) query = fromMaybe [] $ Map.lookup query locations
 
-fetch :: Term -> [Int] -> Maybe Term
+fetch :: Term -> Position -> Maybe Term
 {- Find `Term` given a list of indices for each layer.
 
-   Conforms to the conventions set in `Positions` documentation.
+   Conforms to the conventions set in `PositionMap` documentation.
  -}
-fetch (Variable _) indices = Nothing
+fetch (Variable _) _ = Nothing
 fetch (Predicate _ params _) [] = Nothing
 fetch (Predicate _ params _) [x] = Just $ params !! x
 fetch (Predicate _ params _) (x:xs) = params !! x `fetch` xs
+
+swap :: Term -> Term -> [Position] -> Term
+{- Edit `term` at given `positions` with `subterm`.
+
+   TODO: Reduce time complexity.
+ -}
+swap original subterm = foldr replace original
+    where replace [p] term = symbol term `mkFunction` changeElement (parameters original) p subterm
+          replace (p:ps) term = symbol term `mkFunction` changeElement (parameters original) p child
+             where child = swap (parameters original !! p) subterm [ps]
 
 mkFunction :: String -> [Term] -> Term
 {- Smart constructor for a function.
  -}
 mkFunction sym params = Predicate sym params $ genLocations params
 
-mkFunctionWithLocations :: String -> [Term] -> Positions -> Term
+mkFunctionWithLocations :: String -> [Term] -> PositionMap -> Term
 {- Smart constructor for a function when varLocations provided.
  -}
 mkFunctionWithLocations = Predicate
@@ -100,31 +113,11 @@ mkVariable :: String -> Term
  -}
 mkVariable = Variable
 
-isConstant :: Term -> Bool
-{- Check if `Term` is constant.
- -}
-isConstant (Predicate _ [] _ ) = True
-isConstant _ = False
-
 variables :: Term -> [Term]
+{- Provides all the `Variable`s in a `Predicate`.
+ -}
 variables (Variable _) = []
 variables (Predicate _ _ positions) = Map.keys positions
-
-containsVar :: Term -> Bool
-{- Check if `Term` is parameterized AND contains `Variable`.
- -}
-containsVar (Variable _) = True
-containsVar (Predicate _ [] _ ) = False
-containsVar (Predicate _ _ positions ) = not $ Map.null positions
-
-varPositions :: Term -> [Int]
-{- Provides a list of the `Variable`s indices in a given `Predicate`.
- -}
-varPositions (Variable  _) = []
-varPositions (Predicate _ [] _) = []
-varPositions (Predicate _ xs _) = findIndices isVar xs
-    where isVar (Variable _) = True
-          isVar _          = False
 
 (|=) :: Term -> Term -> Bool 
 {- Match left side with right side. (match operator)

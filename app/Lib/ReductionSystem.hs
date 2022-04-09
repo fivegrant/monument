@@ -15,6 +15,10 @@ import Data.Set.Ordered ( OSet
                         , (|>)
                         , fromList
                         )
+import qualified Data.Map as Map ( keys
+                                 , intersection
+                                 , (!)
+                                 )
 import Data.Maybe ( fromJust ) -- only for use when a list is known NOT to be nothing
 
 import Lib.Term ( Term ( Variable
@@ -25,12 +29,11 @@ import Lib.Term ( Term ( Variable
                 , mkVariable
                 , symbol
                 , parameters
-                , varPositions
                 , varLocations
                 , variables
                 , locate
                 , fetch
-                , containsVar
+                , swap
                 , (|=) -- term matching : equals but specificity is set by the right.
                 )
 import Lib.Utils ( findRepeat )
@@ -39,7 +42,6 @@ import Lib.Utils ( findRepeat )
    being the result.
  -}
 data Rule = Rule { left :: Term, right :: Term } deriving (Eq, Ord)
-
 
 mkRule :: Term -> Term -> Rule
 {- Smart constructor for `Rule`.
@@ -57,9 +59,6 @@ valid (Rule (Variable _) r) = False
 valid (Rule l r) = all onLeft $ variables r
            where onLeft = (`elem` variables l)
 
--- TODO: HANDLE ERRORS WITH OWN TYPE + FILE
-invalid = mkConstant "error:invalid_rule" -- error returned when invalid
-
 instance Show Rule where
 {- Convert `Rule` to string that is re-parsable.
  -}
@@ -72,22 +71,19 @@ transform :: Term -> Rule -> Term -- implicit assumption rule and term match
             with the left side of the rule.
 
    TODO: Error checking with `valid`?
-   TODO: Shorten length of lines
  -}
-transform query
-          (Rule l (Variable x)) = fromJust $ fetch query $ (!!0) $ locate l $ mkVariable x
+transform (Variable _) _ = mkConstant "error:variable_query"
 
-transform (Predicate termSym termArgs _)
-          (Rule (Predicate _ lArgs _) 
-                (Predicate predSym rArgs _)) = if not $ containsVar $ mkFunction predSym rArgs
-                                             then mkFunction predSym rArgs
-                                             else mkFunction predSym $ map pick rArgs
-                                               where leftIndex x = fromJust $ elemIndex x lArgs
-                                                     pick x = case x of 
-                                                               Predicate {} -> x
-                                                               Variable _ -> (!!) termArgs $ leftIndex x
+transform _ (Rule (Variable _) _) = mkConstant "error:invalid_rule"
 
-transform _ _ = mkConstant "error:no_match"
+transform query (Rule l (Variable x)) = fromJust $ fetch query $ (!!0) $ locate l $ mkVariable x
+
+transform query (Rule l r) = if null $ variables l
+                             then r
+                             else foldr convert r locations
+                               where correspond = fromJust . fetch query . head . locate l
+                                     locations = [(k, correspond k) | k <- Map.keys $ Map.intersection (varLocations l) (varLocations r)]
+                                     convert (k, new) term = swap term new $ varLocations r Map.! k
 
 {- `TRS` is the (T)erm (R)ewriting (S)ystem.
 

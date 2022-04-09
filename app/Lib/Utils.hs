@@ -15,3 +15,11 @@ findRepeat [x] = Nothing
 findRepeat (x:xs) | x == head xs = Just x
                   | otherwise = findRepeat xs
 
+
+changeElement :: [a] -> Int -> a -> [a]
+{- Change element at the given index.
+
+   Note: I should probably be using `lens`.
+ -}
+changeElement xs i new = left ++ [new] ++ tail right
+    where (left, right) = splitAt i xs
