@@ -68,12 +68,21 @@ function :: Parser Term
    The parser matches predicates that contain arguments. `term` is
    called recursively for each of the parameters.
  -}
-function = do 
+function = try traditional <|> binary
+
+
+     where traditional = do 
               functionSymbol <- name
               contents <- inParen params
               return $ mkFunction functionSymbol contents
-      where inParen = between (char '(') (char ')')
-            params = term `sepBy` char ','
+           binary = inParen operator
+           inParen = between (char '(') (char ')')
+           params = term `sepBy` char ','
+           operator = do
+              left <- term
+              functionSymbol <- char ' ' *> name
+              right <- char ' ' *> term
+              return $ mkFunction functionSymbol [left,right]
 
 constant :: Parser Term
 {- Returns a `Predicate` value that contains no parameters.
