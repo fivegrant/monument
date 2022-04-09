@@ -132,9 +132,9 @@ Variable _ |= Predicate {} = False  -- right demands specificity
 Variable _ |= Variable _ = True 
 Predicate {} |= Variable _ = True
 Predicate xSymbol [] _ |= Predicate ySymbol [] _ = xSymbol == ySymbol
-Predicate xSymbol xs _ |= Predicate ySymbol ys _ = xSymbol == ySymbol && all match pairs
-                                             where match (x,y) = x |= y
-                                                   pairs = zip xs ys
+Predicate xSymbol xs _ |= Predicate ySymbol ys _ = length xs == length ys &&
+                                                   xSymbol == ySymbol && 
+                                                   uncurry (|=) `all` zip xs ys
 
 instance Show Term where
 {- Convert Terms to strings in a form where they can be re-parsed.
