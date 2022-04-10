@@ -16,6 +16,7 @@ import Text.Megaparsec ( Parsec
                        , (<?>) -- overrides parser `p`'s error with string `m`.
                        , between 
                        , some
+                       , many
                        , noneOf
                        , sepBy
                        , notFollowedBy
@@ -45,6 +46,8 @@ type Parser = Parsec Void String
 
 -- characters that cannot be used to define a predicate or function name
 reservedChars = [' ', '(', ')', ',', '\\', '$']
+singleSpace = some $ char ' ' :: Parser String
+skipSpace = many $ char ' ' :: Parser String
 
 name :: Parser String
 {- Parses string that does not contain reserved characters
@@ -76,12 +79,12 @@ function = try traditional <|> binary
               contents <- inParen params
               return $ mkFunction functionSymbol contents
            binary = inParen operator
-           inParen = between (char '(') (char ')')
-           params = term `sepBy` char ','
+           inParen = between (char '(' *> skipSpace) (skipSpace <* char ')')
+           params = term `sepBy` (skipSpace *> char ',' *> skipSpace)
            operator = do
               left <- term
-              functionSymbol <- char ' ' *> name
-              right <- char ' ' *> term
+              functionSymbol <- singleSpace *> name
+              right <- singleSpace *> term
               return $ mkFunction functionSymbol [left,right]
 
 constant :: Parser Term
@@ -92,7 +95,7 @@ constant :: Parser Term
    which the parser recognizes as a constant. Special rules for parsing
    constants might come along later, so this parser is separate.
  -}
-constant = mkConstant <$> (name <* notFollowedBy (char '('))
+constant = mkConstant <$> (name <* notFollowedBy (skipSpace *> char '('))
 
 term :: Parser Term
 {- Returns `Term`.
@@ -109,7 +112,7 @@ rule :: Parser Rule
  -}
 rule = do
          a <- term
-         b <- string " -> " *> term
+         b <- singleSpace *> string "->" *> singleSpace *> term
          return Rule {left = a, right = b}
 
 parseRule :: String -> Rule 
