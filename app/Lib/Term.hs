@@ -89,9 +89,9 @@ swap :: Term -> Term -> [Position] -> Term
    TODO: Reduce time complexity.
  -}
 swap original subterm = foldr replace original
-    where replace [p] term = symbol term `mkFunction` changeElement (parameters original) p subterm
-          replace (p:ps) term = symbol term `mkFunction` changeElement (parameters original) p child
-             where child = swap (parameters original !! p) subterm [ps]
+    where replace [p] term = symbol term `mkFunction` changeElement (parameters term) p subterm
+          replace (p:ps) term = symbol term `mkFunction` changeElement (parameters term) p child
+              where child = swap (parameters term !! p) subterm [ps]
 
 mkFunction :: String -> [Term] -> Term
 {- Smart constructor for a function.
