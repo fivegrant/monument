@@ -20,6 +20,7 @@ import Lib.ReductionSystem ( TRS
                            )
 import Lib.Parser ( parseRule
                   , parseTerm
+                  , isComment
                   )
 
 printLang :: TRS -> IO()
@@ -69,5 +70,6 @@ main = do
           then interpret newTRS
           else do 
                 file <- readFile $ head args
-                interpret $ mkTRS $ map parseRule $ lines file
+                interpret $ mkTRS $ map parseRule $ strip $ lines file
+       where strip = filter (not . isComment)
 
