@@ -1,31 +1,25 @@
-module Lib.Parser where
+module Lib.Parse.Term where
 
-{- `Lib.Parser` implements two parsers: parseTerm and parseRule which
-    return their respective types `Term` and `Rule`. Conveniently, the AST *is*
+{- `Lib.Parser` implements a `Term` parser. Conveniently, the AST *is*
     already the type that we work with, so no intermediary representation is used.
-    The parser is built using a parser combinator library, allowing us to build
-    a parser by composing smaller ones.
-
-    TODO: - implement lexer allow flexibility with whitespaces.
-          - parse full `TRS` instead of passing a list of lines.
  -}
 
-import Data.Void ( Void )
-import Text.Megaparsec ( Parsec 
-                       , (<|>) -- composes parser `p` with `q`. (q if p fails to parse)
+import Text.Megaparsec ( (<|>) -- composes parser `p` with `q`. (q if p fails to parse)
                        , (<?>) -- overrides parser `p`'s error with string `m`.
                        , between 
-                       , some
-                       , many
-                       , noneOf
                        , sepBy
                        , notFollowedBy
                        , try
                        , runParser
                        )
-import Text.Megaparsec.Char ( char
-                            , string
-                            )
+
+import Text.Megaparsec.Char ( char )
+
+import Lib.Parse.Meta ( Parser
+                      , singleSpace
+                      , skipSpace
+                      , name
+                      )
 
 import Lib.Term ( Term ( Predicate
                        , Variable
@@ -36,26 +30,6 @@ import Lib.Term ( Term ( Predicate
                 , symbol
                 , parameters
                 )
-import Lib.ReductionSystem ( Rule ( Rule )
-                           , mkRule
-                           , left
-                           , right
-                           )
-
-type Parser = Parsec Void String
-
--- characters that cannot be used to define a predicate or function name
-reservedChars = [' ', '(', ')', ',', '\\', '$']
-singleSpace = some $ char ' ' :: Parser String
-skipSpace = many $ char ' ' :: Parser String
-
-name :: Parser String
-{- Parses string that does not contain reserved characters
-
-   The different components of the term parser end up using this because
-   no difference is enforced between variables and predicates.
- -}
-name = some $ noneOf reservedChars
 
 variable :: Parser Term
 {- Returns a `Variable` value.
@@ -63,6 +37,7 @@ variable :: Parser Term
    The parser simply reads a string of the form $variableName
    and tosses the `$` symbol.
  -}
+
 variable = mkVariable <$> (char '$' *> name)
 
 function :: Parser Term
@@ -105,26 +80,6 @@ term :: Parser Term
 -}
 term = try constant <|> try function <|> variable <?> "a well-formed term"
 
-rule :: Parser Rule
-{- Returns `Rule` by parsing two seperate `Term`s.
-
-   The parser splits the string along " -> " and calls `term` on both sides.
- -}
-rule = do
-         a <- term
-         b <- singleSpace *> string "->" *> singleSpace *> term
-         return Rule {left = a, right = b}
-
-parseRule :: String -> Rule 
-{- Returns Rule by interfacing with `rule` parser.
-
-   An abstraction is provided so the user does not have to deal with
-   `Megaparsec`.
- -}
-parseRule = (.) handler $ runParser rule ""
-          where handler (Right x) = x
-                handler _ = mkRule (mkConstant "error") (mkConstant "null")
-
 parseTerm :: String -> Term 
 {- Returns `Term` by interfacing with `term` parser.
 
@@ -134,12 +89,3 @@ parseTerm :: String -> Term
 parseTerm = (.) handler $ runParser term ""
           where handler (Right x) = x
                 handler _ = mkConstant "unreadable"
-
-isComment :: String -> Bool
-{- Checks if comment
-
-   TODO!: Use a `Parser` to check for whitespace safely.
-   TODO:  Implement into lexer.
- -}
-isComment [] = True
-isComment xs = head xs == ' '

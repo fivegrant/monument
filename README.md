@@ -86,20 +86,7 @@ Dec(0, b, a) -> Dec(b, a)
 .....
 20 -> Dec(2 , 0)
 
-there needs to be two extra bits of notation:
-
-firstly, we need something to allow continues a pattern
-to continue `(...)` so Dec(...) but i'm trying to figure out
-what else
-
-secondly:
-`\(1,2,3,4,5,6,7,8,9) $a$b$c |> Dec($a,$b,$c)` would allow us to make the 
-numbers 000 -> 100 expressible
-note that `\` would have to update the parser.
-also `|>` indicates the left side will be shown to the user but
-the rightside will be used for term-rewriting although when returned
-to the user, it will then return to the left side form.
-
+\macro_$m\, >- M($m)
 ```
 
 ## Errors

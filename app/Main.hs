@@ -18,10 +18,10 @@ import Lib.ReductionSystem ( TRS
                            , insertRule
                            , normalize
                            )
-import Lib.Parser ( parseRule
-                  , parseTerm
-                  , isComment
-                  )
+import Lib.Parse.Parser ( parseRule
+                        , parseTerm
+                        , isComment
+                        )
 
 printLang :: TRS -> IO()
 {- Print the entire active reduction system to output
