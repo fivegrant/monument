@@ -1,4 +1,4 @@
-module Lib.Term where
+module Lib.Component.Term where
 {- `Lib.Term` defines the basic unit of rewriting, `Term` and its
    functions and constraints.
  -}
@@ -20,7 +20,7 @@ import qualified Data.Map as Map ( Map
                                  , null
                                  )
 
-import Lib.Utils ( changeElement )
+import Lib.Utils.List ( changeElement )
 
 {- `PositionMap` takes a Function and returns a list of all the `Variable` positions.
    `[Position]` gives all the paths available in a list.
@@ -41,8 +41,11 @@ type PositionMap = Map.Map Term [Position]
    a constant is really just a function with no argument hence
    constant being represented by a `Predicate` with no parameters. 
  -}
-data Term = Variable { symbol :: String } |
-            Predicate { symbol :: String, parameters :: [Term], varLocations :: PositionMap } 
+data Term = Variable  { symbol :: String } |
+            Predicate { symbol       :: String,
+                        parameters   :: [Term],
+                        varLocations :: PositionMap 
+                      } 
             deriving (Eq)
 
 genLocations :: [Term] -> PositionMap

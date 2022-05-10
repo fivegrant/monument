@@ -21,15 +21,15 @@ import Lib.Parse.Meta ( Parser
                       , name
                       )
 
-import Lib.Term ( Term ( Predicate
-                       , Variable
-                       )
-                , mkFunction
-                , mkConstant
-                , mkVariable
-                , symbol
-                , parameters
-                )
+import Lib.Component.Term ( Term ( Predicate
+                                 , Variable
+                                 )
+                          , mkFunction
+                          , mkConstant
+                          , mkVariable
+                          , symbol
+                          , parameters
+                          )
 
 variable :: Parser Term
 {- Returns a `Variable` value.

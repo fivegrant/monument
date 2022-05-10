@@ -16,13 +16,13 @@ import Lib.Parse.Meta ( Parser
 
 import Lib.Parse.Term ( term )
 
-import Lib.ReductionSystem ( Rule ( Rule )
-                           , mkRule
-                           , left
-                           , right
-                           )
+import Lib.Component.Rule ( Rule ( Rule )
+                          , mkRule
+                          , left
+                          , right
+                          )
 
-import Lib.Term ( mkConstant )
+import Lib.Component.Term ( mkConstant )
 
 rule :: Parser Rule
 {- Returns `Rule` by parsing two seperate `Term`s.

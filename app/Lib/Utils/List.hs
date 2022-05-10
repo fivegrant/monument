@@ -1,4 +1,4 @@
-module Lib.Utils where
+module Lib.Utils.List where
 {- `Lib.Utils` provides project wide helper functions.
 
    Functions that do not apply uniquely to rewriting system

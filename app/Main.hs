@@ -12,12 +12,13 @@ import System.IO ( hSetBuffering
                  )
 import System.Environment ( getArgs )
 
-import Lib.ReductionSystem ( TRS
-                           , newTRS
-                           , mkTRS
-                           , insertRule
-                           , normalize
-                           )
+import Lib.System.TRS ( TRS
+                      , newTRS
+                      , mkTRS
+                      , insertRule
+                      , normalize
+                      )
+
 import Lib.Parse.Parser ( parseRule
                         , parseTerm
                         , isComment

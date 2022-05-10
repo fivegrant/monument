@@ -14,9 +14,10 @@ extra-source-files:
 
 executable monument
     main-is:          Main.hs
-    other-modules:    Lib.ReductionSystem
-                      Lib.Term
-                      Lib.Utils
+    other-modules:    Lib.Component.Rule
+                      Lib.Component.Term
+                      Lib.System.TRS
+                      Lib.Utils.List
                       Lib.Parse.Meta
                       Lib.Parse.Parser
                       Lib.Parse.Comment
