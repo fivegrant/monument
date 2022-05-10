@@ -1,5 +1,5 @@
 { mkDerivation, base, containers, lib, megaparsec
-, ordered-containers
+, ordered-containers, regexpr
 }:
 mkDerivation {
   pname = "monument";
@@ -8,7 +8,7 @@ mkDerivation {
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
-    base containers megaparsec ordered-containers
+    base containers megaparsec ordered-containers regexpr
   ];
   enableLibraryProfiling = true;
   enableExecutableProfiling = true;
