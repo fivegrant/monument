@@ -23,3 +23,15 @@ changeElement :: [a] -> Int -> a -> [a]
  -}
 changeElement xs i new = left ++ [new] ++ tail right
     where (left, right) = splitAt i xs
+
+compress :: [(Int, a)] -> [[a]]
+{- Reduce ordered pairs into a list of lists ordered
+   by the index provided by the first element in the pair.
+
+   TODO: Reduce time complexity.
+ -}
+compress pairs = foldl collect initialList pairs
+         where size = (+1) $ maximum $ map fst pairs
+               initialList = replicate size []
+               newList xs pair = xs !! fst pair ++ [snd pair]
+               collect xs pair = changeElement xs (fst pair) (newList xs pair)
