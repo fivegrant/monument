@@ -23,7 +23,7 @@ type Parser = Parsec Void String
 reservedChars = [' ', '(', ')', ',', '\\', '$']
 reservedNames = ["->", "<-", ">-", "-<"] -- UNUSED
 singleSpace = some $ char ' ' :: Parser String
-skipSpace = many $ char ' ' :: Parser String
+skipSpace = many $ char ' '   :: Parser String
 
 name :: Parser String
 {- Parses string that does not contain reserved characters
@@ -32,5 +32,4 @@ name :: Parser String
    no difference is enforced between variables and predicates.
  -}
 name = some $ noneOf reservedChars
-
 
