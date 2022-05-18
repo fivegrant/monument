@@ -27,23 +27,16 @@ import Lib.Parse.Parser ( parseRule
 printLang :: TRS -> IO()
 {- Print the entire active reduction system to output
  -}
-printLang trs = do
-                 print trs
-                 interpret trs
+printLang trs = print trs >> interpret trs
 
 query :: TRS -> String -> IO()
 {- Insert rule into reduction system OR normalize provided string
  -}
-query trs input = do 
-                   if null input 
-                    then interpret trs
-                    else
-                       if " -> " `isInfixOf` input 
-                       then interpret $ insertRule trs $ parseRule input 
-                       else
-                         do 
-                          putStrLn $ (++) "::: " $ show $ normalize trs $ parseTerm input
-                          interpret trs
+query trs input
+                | null input  = interpret trs
+                |" -> " `isInfixOf` input  = interpret $ insertRule trs $ parseRule input 
+                | otherwise = printResult input >> interpret trs
+  where printResult = putStrLn . (++) "::: " . show . normalize trs . parseTerm
 
 interpret :: TRS -> IO ()
 {- Handles user input and calls corresponding functions.
@@ -59,18 +52,19 @@ interpret trs = do
                                   then printLang trs
                                   else query trs input)
 
-main :: IO ()
+load :: [String] -> IO ()
 {- Starts `interpret` with the correct `TRS`.
 
    If no file is provided, `main` starts `interpret`
    with an empty `TRS`.
  -}
-main = do
-        args <- getArgs
-        if null args 
-          then interpret newTRS
-          else do 
-                file <- readFile $ head args
-                interpret $ mkTRS $ map parseRule $ strip $ lines file
+load [] = interpret newTRS
+load (arg:_) = readFile arg >>= buildTRS
        where strip = filter (not . isComment)
+             buildTRS = interpret . mkTRS . map parseRule . strip . lines
+
+main :: IO ()
+{- Starts the interpreter.
+ -}
+main = getArgs >>= load
 
