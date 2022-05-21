@@ -40,10 +40,10 @@ data Automaton = Automaton [State] [Group]
 type Captures = M.Map Group [String]
 
 mkNone :: String -> Automaton
-mkNone expr = Automaton [ M.empty `State` False] []
+mkNone _ = Automaton [ M.empty `State` False] []
 
 mkEmpty :: String -> Automaton
-mkEmpty expr = Automaton [ M.empty `State` True] []
+mkEmpty _ = Automaton [ M.empty `State` True] []
 
 mkSingleChar :: Char -> Automaton
 mkSingleChar char = Automaton states []
@@ -77,15 +77,14 @@ kleene (Automaton a _) = Automaton [] []
 
 union  :: Automaton -> Automaton -> Automaton
 union (Automaton a _) (Automaton b _) = Automaton [] []
-   where shiftB = S.mapMonotonic (length a + )
-         shiftA = S.mapMonotonic (+1)
+   where shiftA = S.mapMonotonic (+1)
+         shiftB = S.mapMonotonic (length a + )
          shiftState shiftFunc s = let new = M.map shiftFunc $ transitions s in s { transitions = new }
-         b' = shiftState shiftB `map` b
          a' = shiftState shiftA `map` a
+         b' = shiftState shiftB `map` b
          initial = State (M.fromList [(Nothing, S.fromList [1, length a])]) False
-
-
          states = [initial] ++ a' ++  b'
+
 (.|) = union
 
 step :: Locations -> Char -> Automaton -> Locations
@@ -107,5 +106,9 @@ check automaton = run (automaton, initial)
                                   | S.null next = False
                                   | otherwise = run (machine, next) xs
           where next = step locs x machine
+
+isMatch :: String -> String -> Bool
+isMatch regexlike = (Automaton [] [] `check`)
+
 -- int((digit:[0123456789])+) >-
 -- dec((digit:[0123456789])+.(digit:[0123456789])+) >-

@@ -17,12 +17,14 @@ executable monument
     other-modules:    Lib.Component.Rule
                       Lib.Component.Term
                       Lib.System.TRS
+                      Lib.System.ENFA
                       Lib.Utils.List
                       Lib.Parse.Meta
                       Lib.Parse.Parser
                       Lib.Parse.Comment
                       Lib.Parse.Term
                       Lib.Parse.Rule
+                      Lib.Parse.Regexlike
     build-depends:    base ^>=4.14.3.0,
                       containers,
                       ordered-containers,
