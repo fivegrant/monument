@@ -8,8 +8,6 @@ import Text.Megaparsec ( (<|>) -- composes parser `p` with `q`. (q if p fails to
                        , between 
                        , noneOf
                        , some
-                       , sepBy
-                       , notFollowedBy
                        , try
                        , runParser
                        )
@@ -17,18 +15,17 @@ import Text.Megaparsec ( (<|>) -- composes parser `p` with `q`. (q if p fails to
 import Text.Megaparsec.Char ( char )
 
 import Lib.Parse.Meta ( Parser
-                      , singleSpace
                       , reservedChars
-                      , skipSpace
-                      , name
                       )
 
 import Lib.System.ENFA ( Automaton
                        , mkSingleChar
+                       , mkNone
                        , mkEmpty
                        , (.&)
                        , (.*)
                        , (.|)
+                       , check
                        )
 
 singleChar :: Parser Automaton
@@ -51,6 +48,9 @@ union = uncurry (.|) <$> findTwo
          b <- char '+' *> regexlike
          return (a,b)
 
-
 regexlike = try group <|> try concatenation <|> try kleine <|> try union <|> singleChar <?> "regexlike expression"
--- parseRegexlike :: String -> (String -> Bool)
+
+parseRegexlike :: String -> (String -> Bool)
+parseRegexlike = (.) check $ (.) handler $ runParser regexlike ""
+          where handler (Right x) = x
+                handler _ = mkNone ""
