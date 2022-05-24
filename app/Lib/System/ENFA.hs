@@ -87,7 +87,6 @@ union (Automaton a _) (Automaton b _) = Automaton states []
 
 (.|) = union
 
-
 getTransition :: [State] -> Maybe Char -> Int -> Locations
 getTransition states input loc = fromMaybe S.empty $ M.lookup input $ transitions $ states !! loc
 
