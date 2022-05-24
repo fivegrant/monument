@@ -19,6 +19,7 @@ import Lib.Parse.Meta ( Parser
                       , singleSpace
                       , skipSpace
                       , name
+                      , (##)
                       )
 
 import Lib.Component.Term ( Term ( Predicate
@@ -49,10 +50,8 @@ function :: Parser Term
 function = try traditional <|> binary
 
 
-     where traditional = do 
-              functionSymbol <- name
-              contents <- inParen params
-              return $ mkFunction functionSymbol contents
+     where traditional = mkFunction ## pair
+           pair = (,) <$> name <*> inParen params
            binary = inParen operator
            inParen = between (char '(' *> skipSpace) (skipSpace <* char ')')
            params = term `sepBy` (skipSpace *> char ',' *> skipSpace)

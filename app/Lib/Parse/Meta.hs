@@ -24,6 +24,9 @@ reservedChars = [' ', '(', ')', ',', '\\', '$']
 reservedNames = ["->", "<-", ">-", "-<"] -- UNUSED
 singleSpace = some $ char ' ' :: Parser String
 skipSpace = many $ char ' '   :: Parser String
+consPair = (<$>) . uncurry :: (a -> b -> c) -> Parser (a,b) -> Parser c
+(##) = consPair
+infixr 2 ##
 
 name :: Parser String
 {- Parses string that does not contain reserved characters

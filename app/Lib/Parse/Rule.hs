@@ -9,10 +9,11 @@ import Text.Megaparsec ( runParser )
 import Text.Megaparsec.Char ( string )
 
 import Lib.Parse.Meta ( Parser
-                       , reservedChars
-                       , singleSpace
-                       , skipSpace
-                       )
+                      , reservedChars
+                      , singleSpace
+                      , skipSpace
+                      , (##)
+                      )
 
 import Lib.Parse.Term ( term )
 
@@ -29,10 +30,10 @@ rule :: Parser Rule
 
    The parser splits the string along " -> " and calls `term` on both sides.
  -}
-rule = do
-         a <- term
-         b <- singleSpace *> string "->" *> singleSpace *> term
-         return Rule {left = a, right = b}
+rule = mkRule ## pair
+  where pair = (,)
+               <$> term
+               <*> (singleSpace *> string "->" *> singleSpace *> term)
 
 parseRule :: String -> Rule 
 {- Returns Rule by interfacing with `rule` parser.

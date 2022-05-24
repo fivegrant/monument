@@ -23,6 +23,7 @@ import Text.Megaparsec.Char ( char )
 
 import Lib.Parse.Meta ( Parser
                       , reservedChars
+                      , (##)
                       )
 
 import Lib.System.ENFA ( Automaton
@@ -46,8 +47,8 @@ word :: Parser Automaton
 word = foldl (.&) (mkEmpty "") <$> some singleChar 
 
 concatenation :: Parser Automaton
-concatenation = uncurry (.&) <$> findTwo
-  where findTwo = (,)
+concatenation =  (.&) ## pair
+  where pair = (,)
                   <$> unit
                   <*> (char ' ' *> unit)
 
@@ -55,8 +56,8 @@ kleine :: Parser Automaton
 kleine = (<$>) (.*) $ (<*) unit $ char '*'
 
 union :: Parser Automaton
-union = uncurry (.|) <$> inBrac findTwo
-  where findTwo = (,) 
+union = (.|) ## inBrac pair
+  where pair = (,) 
                   <$> unit 
                   <*> (char '|' *>  unit)
         inBrac = char '[' `between` char ']'
