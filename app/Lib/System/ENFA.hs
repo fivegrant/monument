@@ -39,6 +39,8 @@ data Automaton = Automaton [State] [Group] deriving (Show, Eq)
 
 type Captures = M.Map Group [String]
 
+type Path = [(Int, Maybe Char)]
+
 mkNone :: String -> Automaton
 mkNone _ = Automaton [ M.empty `State` False ] []
 
@@ -51,11 +53,17 @@ mkSingleChar char = Automaton states []
                   , M.empty `State` True
                   ]
 
+tag :: String -> Automaton -> Automaton
+tag title (Automaton states group) = Automaton states group'
+  where group' = group ++ [Group (S.fromList [0 .. length states - 1]) title ]
+
 concatenate :: Automaton -> Automaton -> Automaton
-concatenate (Automaton a _) (Automaton b _) = Automaton states []
+concatenate (Automaton a grpA) (Automaton b grpB) = Automaton states $ grpA ++ grpB'
    where shift = S.mapMonotonic ((length a - 1) + )
          shiftState s = let new = M.map shift $ transitions s in s { transitions = new }
          b' = map shiftState b
+         shiftGroup g = let new = shift $ scope g in g { scope = new }
+         grpB' = map shiftGroup grpB
 
          bridge = M.unionWith S.union $ transitions $ head b'
          connectState (State trans True) = State (bridge trans) False
@@ -67,21 +75,34 @@ concatenate (Automaton a _) (Automaton b _) = Automaton states []
 (.&) = concatenate
 
 kleene :: Automaton -> Automaton
-kleene (Automaton a _) = Automaton a' []
+kleene (Automaton a grp) = Automaton a' []
    where bridge = M.unionWith S.union $ transitions $ head a
          connectState (State trans True) = State (bridge trans) True
          connectState s = s
          a' = map connectState a
 
+-- case: (name$regexlike)*
+{-
+kleene (Automaton a grp) = Automaton a' []
+   where bridge = M.unionWith S.union $ transitions $ head a
+         connectState (State trans True) = State (bridge trans) True
+         connectState s = s
+         a' = map connectState a
+-}
+
 (.*) = kleene
 
 union  :: Automaton -> Automaton -> Automaton
-union (Automaton a _) (Automaton b _) = Automaton states []
+union (Automaton a grpA) (Automaton b grpB) = Automaton states $ grpA' ++ grpB'
    where shiftA = S.mapMonotonic (+1)
          shiftB = S.mapMonotonic ((+1) . (length a + ))
          shiftState shiftFunc s = let new = M.map shiftFunc $ transitions s in s { transitions = new }
          a' = shiftState shiftA `map` a
          b' = shiftState shiftB `map` b
+         shiftGroup shiftFunc g = let new = shiftFunc $ scope g in g { scope = new }
+         grpA' = shiftGroup shiftA `map` grpA
+         grpB' = shiftGroup shiftB `map` grpB
+
          initial = State (M.fromList [(Nothing, S.fromList [1, 1 + length a])]) False
          states = [initial] ++ a' ++  b'
 
@@ -98,9 +119,21 @@ grow locs (Automaton states _) = S.unions layers
 
 step :: Locations -> Char -> Automaton -> Locations
 step _ _ (Automaton [] _) = S.empty
-step locs char (Automaton states _) = S.unions $ S.mapMonotonic retrieve locs'
+step locs char (Automaton states grp) = S.unions $ S.mapMonotonic retrieve locs'
     where retrieve loc = getTransition states (Just char) loc
-          locs' = S.union locs $ grow locs (Automaton states [])
+          locs' = S.union locs $ grow locs (Automaton states grp)
+
+{------------------
+growx _ (Automaton [] _) = [] 
+growx locs (Automaton states _) = S.unions layers
+    where addLayer = S.unions . S.mapMonotonic (getTransition states Nothing)
+          layers = takeWhile (not . S.null) $ iterate addLayer locs
+
+stepx _ _ (Automaton [] _) = []
+stepx paths char (Automaton states grp) = S.unions $ S.mapMonotonic retrieve paths'
+    where retrieve loc = getTransition states (Just char) loc
+          paths' = S.union paths $ grow paths (Automaton states grp)
+-----------------}
 
 success :: Locations -> Automaton -> Bool
 success _ (Automaton [] _) = False
@@ -117,4 +150,4 @@ check automaton = run (automaton, initial)
           where next = step locs x machine
 
 -- int((digit:[0123456789])+) >-
--- dec((digit:[0123456789])+.(digit:[0123456789])+) >-
+-- dec((digit:[0123456789])+.(digit:[0123456789]))+ >-

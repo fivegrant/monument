@@ -23,6 +23,7 @@ import Text.Megaparsec.Char ( char )
 
 import Lib.Parse.Meta ( Parser
                       , reservedChars
+                      , name
                       , (##)
                       )
 
@@ -34,14 +35,23 @@ import Lib.System.ENFA ( Automaton
                        , (.*)
                        , (.|)
                        , check
+                       , tag
                        )
 
 singleChar :: Parser Automaton
 singleChar = mkSingleChar <$> noneOf (reservedChars ++ ['|','*','[',']'])
 
+inGroup :: Parser a -> Parser a
+inGroup = char '(' `between` char ')'
+
 group :: Parser Automaton
 group = inGroup regexlike
-   where inGroup = char '(' `between` char ')'
+
+namedGroup :: Parser Automaton
+namedGroup = tag ## inGroup pair
+   where pair = (,)
+                   <$> name
+                   <*> (char '$' *> regexlike)
 
 word :: Parser Automaton
 word = foldl (.&) (mkEmpty "") <$> some singleChar 
@@ -63,7 +73,11 @@ union = (.|) ## inBrac pair
         inBrac = char '[' `between` char ']'
 
 unit :: Parser Automaton
-unit = try group <|> try word <|> try union <|> singleChar
+unit = try namedGroup <|> 
+       try group <|> 
+       try word <|> 
+       try union <|>
+       singleChar
 
 regexlike :: Parser Automaton
 regexlike = try kleine <|> 
