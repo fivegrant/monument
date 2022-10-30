@@ -1,0 +1,5 @@
+[package]
+authors = ["Five Grant <5@fivegrant.com>"]
+name = "monument"
+version = "0.1.0"
+edition = "2021"
