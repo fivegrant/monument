@@ -1,26 +1,6 @@
 # monument
-**FOR JIM'S CODE REVIEW ASSIGNMENT, PLEASE LOOK AT `app/Lib/Parser.hs`**
-**FEEL FREE TO COMMENT ON ANYTHING ELSE IN `app` THOUGH**
-
-**NOTICE: CERTAIN TYPES OF REDUCTIONS END UP CRASHING.**
-**NO GUARANTEES AT THIS POINT. WILL FIX ASAP**
-**PARSING WORKS BUT I HAVENT GOTTEN AROUND TO WRITING A LEXER SO WATCH YOUR WHITESPACES (will also fix soon).**
 
 ## Usage
-To build using [Nix](https://nixos.org/):
-```
-nix-build release.nix
-```
-Alternatively, [you can use Cabal and cabal-install](https://katychuang.com/cabal-guide/):
-```
-cabal update
-cabal install
-cabal build
-dist/build/monument # might be `dist-newstyle/.../build/monument` instead
-```
-note: this works, but cabal-install is not actively supported. Therefore,
-Nix is recommended.
-
 To start the interpreter:
 ```
 ./result/bin/monument [optional-input-file]
@@ -34,16 +14,6 @@ Once you are in the interpreter, the possible commands are
 - `[term] -> [term]` adds a new rule to the reduction system
 - `[term]` normalizes a term.
 
-## Developing
-
-When `monument.cabal` is changed in any way,
-make sure to run:
-```
-nix-shell --pure -p cabal2nix --run "cabal2nix . --enable-profiling" > monument.nix
-```
-
-If any new files are added to `app`, make sure they are in the `Lib` subdirectory and include it in
-`other-modules` in `monument.cabal`.
 
 ## Thoughts
 

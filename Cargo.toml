@@ -3,3 +3,7 @@ authors = ["Five Grant <5@fivegrant.com>"]
 name = "monument"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]
+clap = {version = "4.0.18", features = ["derive"]}
+clippy = "0.0.302"
