@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod interpreter;
 
 use clap::{Parser, Subcommand};
 extern crate pest;
@@ -14,22 +15,22 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Run {
+    Compile {
         #[arg(short, long)]
         arg: String,
     },
-    Compile
+    Interactive
 }
 
 fn main() {
     let cli = Cli::parse();
-    println!("{:?}", ast::Monument);
     match &cli.command {
-        Some(Commands::Run { arg }) => {
+        Some(Commands::Compile { arg }) => {
+            println!("{:?}", ast::Monument);
             println!("Passed in {}. Nothing is being done yet.", arg);
         }
-        Some(Commands::Compile) => {
-            println!("Compiler called")
+        Some(Commands::Interactive) => {
+            interpreter::interpret();
         }
         None => {}
     }
