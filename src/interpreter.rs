@@ -11,12 +11,12 @@ fn read_input() -> InterpreterResponse {
    print!("Λ:");
    io::stdout().flush();
    io::stdin().read_line(&mut input);
-   match *input.as_str() {
+   match input.as_str().trim_end() {
        "exit" => {
            return InterpreterResponse::Stop;
        }
        _ => {
-           println!("echo:{}", input);
+           print!("echo:{}", input);
            return InterpreterResponse::Continue;
        }
    }
@@ -25,10 +25,10 @@ fn read_input() -> InterpreterResponse {
 pub fn interpret() {
   loop {
       match read_input() {
-          Continue => {}
-          Stop => {
+          InterpreterResponse::Continue => {}
+          InterpreterResponse::Stop => {
               println!("EOI");
-              break; 
+              return; 
           }
       }
   }
