@@ -1,11 +1,9 @@
-pub mod ast;
-pub mod interpreter;
-
 use clap::{Parser, Subcommand};
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
+mod backend;
 
 #[derive(Parser)]
 struct Cli {
@@ -26,11 +24,11 @@ fn main() {
     let cli = Cli::parse();
     match &cli.command {
         Some(Commands::Compile { arg }) => {
-            println!("{:?}", ast::Monument);
+            println!("{:?}", backend::ast::Monument);
             println!("Passed in {}. Nothing is being done yet.", arg);
         }
         Some(Commands::Interactive) => {
-            interpreter::interpret();
+            backend::interpreter::interpret();
         }
         None => {}
     }

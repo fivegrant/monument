@@ -1,5 +1,6 @@
 use std::io;
 use std::io::Write;
+use crate::backend::ast::add_rule;
 
 enum InterpreterResponse {
    Continue,
@@ -17,6 +18,7 @@ fn read_input() -> InterpreterResponse {
        }
        _ => {
            print!("echo:{}", input);
+           add_rule(input.as_str().trim_end());
            return InterpreterResponse::Continue;
        }
    }

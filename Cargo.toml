@@ -6,6 +6,5 @@ edition = "2021"
 
 [dependencies]
 clap = {version = "4.0.18", features = ["derive"]}
-clippy = "0.0.302"
 pest = "2.4.0"
 pest_derive = "2.4.0"

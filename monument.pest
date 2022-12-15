@@ -1,7 +1,6 @@
 term = @{ ASCII_ALPHANUMERIC+ }
 
-operation = _{ assign | macro_assign }
+operation = _{ assign }
   assign = { "->" }
-  macro_assign = { ">-" }
 
 rule = !{ term ~ WHITE_SPACE ~ operation ~ WHITE_SPACE ~ term }
